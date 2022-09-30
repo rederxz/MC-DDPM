@@ -255,14 +255,14 @@ Take `pd4x` as an example and test 6 volumes. Run the following shell script to 
 ```shell
 SCRIPT_FLAGS="--method_type mcddpm \
 --log_dir logs/fastmri/mcddpm/pd4x"
-DATASET_FLAGS="--dataset fastmri --data_dir ../datasets/fastmri/knee_singlecoil_val \
+DATASET_FLAGS="--dataset fastmri --data_dir ../../data/FastMRI/singlecoil_val \
 --data_info_list_path data/fastmri/pd_test_6_file_info.pkl \
 --batch_size 20 --acceleration 4 --num_workers 2"
 TEST_FLAGS="--model_save_dir checkpoints/fastmri/mcddpm/pd4x --resume_checkpoint model035000.pt \
 --output_dir outputs/fastmri/mcddpm/pd4x --num_samples_per_mask 20 \
 --debug_mode False"
 
-test.py $SCRIPT_FLAGS $DATASET_FLAGS $TEST_FLAGS
+python -m torch.distributed.launch --nproc_per_node=NUM_GPUS test.py $SCRIPT_FLAGS $DATASET_FLAGS $TEST_FLAGS
 ```
 
 The argument `--num_samples_per_mask` is to control the number of construction for one slice. We can also add the argument `--timestep_respacing 500` to specify the sampling steps (default is 1000).
@@ -282,5 +282,5 @@ The result of testing will be saved in the sub-directory of `outpus` which is sp
 
 ### Trained Models
 
-The trained models can be downloaded from [https://drive.google.com/drive/folders/1tgEI7GOcb2zF29dq0obYP1SMkXR38cpZ?
-usp=sharing](https://drive.google.com/drive/folders/1cR4_6CX8tfGEHz_UytT5QbHKXSEOJOxX) to test the performance.
+The trained models can be downloaded from https://drive.google.com/drive/folders/1tgEI7GOcb2zF29dq0obYP1SMkXR38cpZ?
+usp=sharing to test the performance.
