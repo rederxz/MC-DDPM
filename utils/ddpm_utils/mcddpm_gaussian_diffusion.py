@@ -1,5 +1,8 @@
+import numpy as np
+
 from utils.ddpm_utils.gaussian_diffusion import *
 from utils.ddpm_utils.gaussian_diffusion import _extract_into_tensor, _WrappedModel
+from utils.mri_data_utils.transform_util import ifftc_th
 
 
 class KspaceGaussianDiffusion(GaussianDiffusion):
@@ -167,6 +170,8 @@ class KspaceGaussianDiffusion(GaussianDiffusion):
         else:
             raise NotImplementedError(self.corrector_type)
 
+        history = list()
+
         # we change variable name `img` to `kspace_c`
         for i in indices:
             t = th.tensor([i] * shape[0], device=device)
@@ -174,7 +179,15 @@ class KspaceGaussianDiffusion(GaussianDiffusion):
                 kspace_c = predictor(model, kspace_c, t, model_kwargs=model_kwargs, clip=clip)
                 if corrector is not None:
                     assert False, "code of corrector has not been completed"
-        return kspace_c
+            if i % 10 == 0:
+                to_save_kspace = kspace_c + model_kwargs["kspace_zf"]
+                to_save_img = ifftc_th(to_save_kspace).cpu().numpy()
+                history.append(to_save_img)
+
+        history = np.stack(history, axis=0)
+        history = np.swapaxes(history, 0, 1)  # => [bs, t, ...]
+
+        return kspace_c, history
 
     def training_losses(self, model, x_start, t, model_kwargs):
         assert model_kwargs is not None, "model_kwargs contains the condtions"

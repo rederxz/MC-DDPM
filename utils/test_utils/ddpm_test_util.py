@@ -6,7 +6,7 @@ from utils.mri_data_utils.metrics_util import METRICS
 from utils.mri_data_utils.transform_util import *
 
 
-MAX_NUM_SAVED_SAMPLES = 5
+MAX_NUM_SAVED_SAMPLES = 1
 
 
 class DDPMTestLoop(TestLoop):
@@ -47,6 +47,9 @@ class DDPMTestLoop(TestLoop):
             os.makedirs(samples_path, exist_ok=True)
 
         samples = self.sample(batch_kwargs)
+        if isinstance(samples, tuple):
+            samples, histories = samples
+            self.save_histories(histories, samples_path)
         self.save_samples(samples, samples_path, batch_kwargs)
         logger.log(f"complete sampling for {file_name} slice {slice_index}")
 
@@ -84,6 +87,15 @@ class DDPMTestLoop(TestLoop):
             "image": batch_kwargs["image"][0:1, ...],
         }
         save_args_dict(saved_args, os.path.join(samples_path, "slice_information.pkl"))
+
+    def save_histories(self, histories, histories_path):
+        for i in range(min(MAX_NUM_SAVED_SAMPLES, len(histories))):
+            for t in range(histories.shape[1]):
+                sample = np.abs(real2complex_np(histories[i, t]))
+                plt.imsave(
+                    fname=os.path.join(histories_path, f"sample_{i + 1}_{t + 1}.png"),
+                    arr=sample, cmap="gray"
+                )
 
     def compute_metrics_for_dataset(self):
         file_dirs = []
